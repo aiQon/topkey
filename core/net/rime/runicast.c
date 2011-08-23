@@ -135,6 +135,9 @@ recv_from_stunicast(struct stunicast_conn *stunicast, const rimeaddr_t *from)
       PRINTF("%d.%d: runicast: ACKed %d\n",
 	     rimeaddr_node_addr.u8[0], rimeaddr_node_addr.u8[1],
 	     packetbuf_attr(PACKETBUF_ATTR_PACKET_ID));
+      if(c->u->recv_ack != NULL) {
+            c->u->recv_ack(c, from, packetbuf_attr(PACKETBUF_ATTR_PACKET_ID)); //CUSTOM: dont perform rime actions in there
+      }
       c->sndnxt = (c->sndnxt + 1) % (1 << RUNICAST_PACKET_ID_BITS);
       c->is_tx = 0;
       stunicast_cancel(&c->c);

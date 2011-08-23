@@ -10,6 +10,7 @@ RIME_MESH      = mesh.c route.c route-discovery.c
 RIME_COLLECT   = collect.c collect-neighbor.c neighbor-discovery.c \
 		 collect-link-estimate.c
 RIME_RUDOLPH   = rudolph0.c rudolph1.c rudolph2.c
+SRIME		   = srime.c
 ifdef UIP_CONF_IPV6
 #RIME_UIP6      = rime-udp.c
 endif # UIP_CONF_IPV6
@@ -21,4 +22,5 @@ CONTIKI_SOURCEFILES += $(RIME_BASE) \
                $(RIME_COLLECT) \
                $(RIME_RUDOLPH) \
                $(RIME_CHAMELEON) \
-               $(RIME_UIP6)
+               $(RIME_UIP6) \
+               $(SRIME)

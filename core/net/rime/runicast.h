@@ -91,6 +91,7 @@ struct runicast_conn;
                              STUNICAST_ATTRIBUTES
 struct runicast_callbacks {
   void (* recv)(struct runicast_conn *c, const rimeaddr_t *from, uint8_t seqno);
+  void (* recv_ack)(struct runicast_conn *c, const rimeaddr_t *from, uint8_t seqno);
   void (* sent)(struct runicast_conn *c, const rimeaddr_t *to, uint8_t retransmissions);
   void (* timedout)(struct runicast_conn *c, const rimeaddr_t *to, uint8_t retransmissions);
 };
