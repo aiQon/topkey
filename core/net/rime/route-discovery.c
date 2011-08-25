@@ -45,6 +45,7 @@
 
 #include "contiki.h"
 #include "net/rime.h"
+#include "net/rime/srime.h"
 #include "net/rime/route.h"
 #include "net/rime/route-discovery.h"
 
@@ -226,6 +227,13 @@ rreq_packet_received(struct netflood_conn *nf, const rimeaddr_t *from,
      c->last_rreq_originator.u8[0],
      c->last_rreq_originator.u8[1],
 	 c->last_rreq_id);
+
+  if(get_pairwise_key(from) == NULL){
+	  printf("dropping AODV RREQ because we lack pairwise key for back link.\n");
+	  return 0;
+  }else {
+	  printf("Forwarding AODV RREQ.\n");
+  }
 
   if(!(rimeaddr_cmp(&c->last_rreq_originator, originator) &&
        c->last_rreq_id == msg->rreq_id)) {

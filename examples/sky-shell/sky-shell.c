@@ -70,6 +70,7 @@
 #include "lib/memb.h"
 
 #include "net/rime.h"
+#include "net/rime/mesh.h"
 
 #include "cfs/cfs.h"
 #include "cfs/cfs-coffee.h"
@@ -267,6 +268,38 @@ recv_runicast(struct runicast_conn *c, const rimeaddr_t *from, uint8_t seqno)
 
 
 }
+
+
+
+static void
+sent(struct mesh_conn *c)
+{
+  printf("packet sent\n");
+}
+
+static void
+timedout(struct mesh_conn *c)
+{
+  printf("packet timedout\n");
+}
+
+static void
+recv(struct mesh_conn *c, const rimeaddr_t *from, uint8_t hops)
+{
+  printf("Data received from %d.%d: %.*s (%d)\n",
+	 from->u8[0], from->u8[1],
+	 packetbuf_datalen(), (char *)packetbuf_dataptr(), packetbuf_datalen());
+
+}
+
+const static struct mesh_callbacks callbacks = {recv, sent, timedout};
+
+
+
+
+
+
+
 static void
 sent_runicast(struct runicast_conn *c, const rimeaddr_t *to, uint8_t retransmissions)
 {
@@ -285,6 +318,7 @@ static const struct runicast_callbacks runicast_callbacks = {recv_runicast,
 							     timedout_runicast};
 
 static struct runicast_conn runicast;
+static struct mesh_conn mesh;
 
 
 PROCESS(shell_sky_alldata_process, "sky-alldata");
@@ -308,6 +342,15 @@ SHELL_COMMAND(sky_printkeys_command,
 	      "printkeys",
 	      "printkeys: prints the local LEAP keys to console [DEBUG]",
 	      &shell_sky_printkeys_process);
+/*-----------------------------end of get rime address-----------------------*/
+
+
+/*------------------------------recceive setup information-----------------------------*/
+PROCESS(shell_sky_senddummy_process, "sky_senddummy");
+SHELL_COMMAND(sky_senddummy_command,
+	      "sky_senddummy",
+	      "sky_senddummy: sends a dummy packet to 136.237 [DEBUG]",
+	      &shell_sky_senddummy_process);
 /*-----------------------------end of get rime address-----------------------*/
 
 
@@ -507,6 +550,27 @@ PROCESS_THREAD(shell_sky_getrimeaddress_process, ev, data)
 }
 /*---------------------------------------------------------------------------*/
 
+/*---------------------------------------------------------------------------*/
+PROCESS_THREAD(shell_sky_senddummy_process, ev, data)
+{
+  PROCESS_EXITHANDLER(mesh_close(&mesh);)
+  PROCESS_BEGIN();
+
+  mesh_open(&mesh, 132, &callbacks);
+
+  rimeaddr_t addr;
+  char *MESSAGE="das ist eine dummy nachricht.";
+  packetbuf_copyfrom(MESSAGE, strlen(MESSAGE));
+  addr.u8[0] = 136;
+  addr.u8[1] = 237;
+  mesh_send(&mesh, &addr);
+
+  PROCESS_END();
+}
+/*---------------------------------------------------------------------------*/
+
+
+
 
 /*---------------------------------------------------------------------------*/
 
@@ -592,6 +656,7 @@ PROCESS_THREAD(sky_shell_process, ev, data)
   shell_register_command(&sky_getrimeaddress_command);
   shell_register_command(&sky_setup_command);
   shell_register_command(&sky_printkeys_command);
+  shell_register_command(&sky_senddummy_command);
 
   
   PROCESS_END();
