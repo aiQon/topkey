@@ -125,6 +125,7 @@ int extract_address(char *input){
 	memcpy(address_work,input,length_of_address);
 	char *address_sep = strchr(address_work,'.');
 	address_work[address_sep-address_work] = 0x00;
+	address_work[length_of_address] = 0x00;
 	int return_value = (atoi(address_work)<<8)+atoi(address_sep+1);  //TODO hier ansetzen und atoi selber schreiben :( oder gleich binary übertragen
 	free(address_work);
 	return return_value;
@@ -456,7 +457,10 @@ PROCESS_THREAD(shell_sky_printkeys_process, ev, data) {
 		node.u8[0] = 97;
 		node.u8[1] = 14;
 		char *key = get_pairwise_key(&node);
-		print_key("[*] key for 97.14:", key);
+		if(key != NULL)
+			print_key("[*] key for 97.14:", key);
+		else
+			printf("key not found.\n");
 
 	PROCESS_END();
 }
@@ -553,10 +557,9 @@ PROCESS_THREAD(shell_sky_getrimeaddress_process, ev, data)
 /*---------------------------------------------------------------------------*/
 PROCESS_THREAD(shell_sky_senddummy_process, ev, data)
 {
-  PROCESS_EXITHANDLER(mesh_close(&mesh);)
   PROCESS_BEGIN();
 
-  mesh_open(&mesh, 132, &callbacks);
+
 
   rimeaddr_t addr;
   char *MESSAGE="das ist eine dummy nachricht.";
@@ -634,6 +637,7 @@ PROCESS_THREAD(sky_shell_process, ev, data)
   PROCESS_BEGIN();
 
   runicast_open(&runicast, 144, &runicast_callbacks);
+  mesh_open(&mesh, 132, &callbacks);
 
   cfs_coffee_format();
   printf("[*] formatting nvram during startup [DEBUG]\n");
