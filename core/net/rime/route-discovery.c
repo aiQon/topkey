@@ -229,7 +229,7 @@ rreq_packet_received(struct netflood_conn *nf, const rimeaddr_t *from,
 	 c->last_rreq_id);
 
   if(get_pairwise_key(from) == NULL){
-	  printf("dropping AODV RREQ because we lack pairwise key for back link.\n");
+	  printf("dropping AODV RREQ because we lack pairwise key for back link to %d.%d\n", from->u8[0], from->u8[1]);
 	  return 0;
   }else {
 	  printf("Forwarding AODV RREQ.\n");
