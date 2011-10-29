@@ -11,3 +11,10 @@ Makefile.target
 doc/html
 patches-*
 tools/tunslip6
+.cproject
+.project
+*.orig
+*.co
+*.sky
+*.pyc
+*.rej
