@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, Swedish Institute of Computer Science
+ * Copyright (c) 2010, Swedish Institute of Computer Science.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,69 +26,28 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * This file is part of the Contiki operating system.
- *
+ * $Id: project-conf.h,v 1.1 2010/10/28 13:11:08 simonduq Exp $
  */
 
-/**
- * \file
- *	Architecture-dependent functions for SD over SPI.
- * \author
- * 	Nicolas Tsiftes <nvt@sics.se>
- */
+#ifndef __PROJECT_H__
+#define __PROJECT_H__
 
-#include "contiki.h"
-#include "msb430-uart1.h"
-#include "sd-arch.h"
+/* Free some code and RAM space */
+#define UIP_CONF_TCP                    0
+#undef UIP_CONF_DS6_NBR_NBU
+#define UIP_CONF_DS6_NBR_NBU            12
+#undef UIP_CONF_DS6_ROUTE_NBU
+#define UIP_CONF_DS6_ROUTE_NBU          12
 
-#define SPI_IDLE	0xff
+/* The total number of queuebuf */
+#undef QUEUEBUF_CONF_NUM
+#define QUEUEBUF_CONF_NUM               140
+/* The number of queuebuf actually stored in RAM. If
+   not set or equal to the total number of queuebuf,
+   swapping is disabled, and CFS not linked. */
+#define QUEUEBUFRAM_CONF_NUM            2
 
-int
-sd_arch_init(void)
-{
-  P2SEL &= ~64;
-  P2DIR &= ~64;
+/* Set a large (1 sector) default size for coffee files. */
+#define COFFEE_CONF_DYN_SIZE     (COFFEE_SECTOR_SIZE - COFFEE_PAGE_SIZE + 1)
 
-  P5SEL |= 14;
-  P5SEL &= ~1;
-  P5OUT |= 1;
-  P5DIR |= 13;
-  P5DIR &= ~2;
-
-  uart_set_speed(UART_MODE_SPI, 2, 0, 0);
-
-  return 0;
-}
-
-
-void
-sd_arch_spi_write(int c)
-{
-  UART_TX = c;
-  UART_WAIT_TXDONE();
-}
-
-void
-sd_arch_spi_write_block(uint8_t *bytes, int amount)
-{
-  int i;
-  volatile char dummy;
-
-  for(i = 0; i < amount; i++) {
-    UART_TX = bytes[i];
-    UART_WAIT_TXDONE();
-    UART_WAIT_RX();
-    dummy = UART_RX;
-  }
-}
-
-
-unsigned
-sd_arch_spi_read(void)
-{
-  if((U1IFG & URXIFG1) == 0) {
-    UART_TX = SPI_IDLE;
-    UART_WAIT_RX();
-  }
-  return UART_RX;
-}
+#endif /* __PROJECT_H__ */
