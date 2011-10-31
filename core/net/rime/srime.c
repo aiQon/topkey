@@ -72,17 +72,17 @@ node *cluster_list = NULL;
 node *pairwise_list = NULL;
 
 node *create_new_node(int address, char *key, int key_len){
-	printf("[*] entered create_new_node\n");
+	//printf("[*] entered create_new_node\n");
 	node *new_node = (node*) malloc(sizeof(node));
 	if(new_node == NULL){
-		printf("[*] failed creating new node: no RAM\n");
+		//printf("[*] failed creating new node: no RAM\n");
 		return NULL;		//kein RAM mehr
 	}
-	printf("[*] new node created successfully\n");
+	//printf("[*] new node created successfully\n");
 	new_node->address = address;
 	new_node->key=key;
 	new_node->key_len=key_len;
-	printf("[*] values assigned\n");
+	//printf("[*] values assigned\n");
 	new_node->next= NULL;
 	return new_node;
 }
@@ -113,18 +113,18 @@ node* insert_into_pairwise(int address, char *key, int key_len){
 
 node* insert_into_cluster(int address, char *key, int key_len){
 	if(!block_key_insertion){
-		printf("[*] adding cluster entry to list\n");
+		//printf("[*] adding cluster entry to list\n");
 		if(cluster_list == NULL){
-			printf("[*] cluster list is empty, creating first node\n");
+			//printf("[*] cluster list is empty, creating first node\n");
 			node *new_node = create_new_node(address,key, key_len);
-			printf("[*] new node created w/o dying, hopefully\n");
+			//printf("[*] new node created w/o dying, hopefully\n");
 			cluster_list = new_node;
 			return cluster_list;
 		}else{
 			node *current = cluster_list;
 			while(current->next != NULL)
 				current = current->next;
-			printf("[*] found end of cluster list...inserting at the end\n");
+			//printf("[*] found end of cluster list...inserting at the end\n");
 			return insert_right(current,address,key, key_len);
 		}
 	}else
@@ -316,7 +316,7 @@ int restore_key(char *key, int key_size, char *file){
 void restore_cluster(){
 	int fd_read = cfs_open(cluster_file, CFS_READ);
 	if(fd_read != -1){
-		printf("[*] restoring cluster keys...\n");
+		//printf("[*] restoring cluster keys...\n");
 		int read_bytes=0;
 		char buff[18];
 		int address;
@@ -326,14 +326,14 @@ void restore_cluster(){
 			memcpy(key,buff,16);
 			node *element = insert_into_cluster(address,key,16);
 			char *uip = decode_uip(element);
-			printf("[*] read cluster key for %s\n", uip);
+			//printf("[*] read cluster key for %s\n", uip);
 			free(uip);
-			printf("[*] read key: ");
-			int j;
+			//printf("[*] read key: ");
+			/*int j;
 			for(j=0;j<16;j++){
 				printf("%2X ", key[j]);
 			}
-			printf("\n");
+			printf("\n");*/
 		}
 	}else{
 		printf("[*] no keys available to be restored\n");
@@ -353,7 +353,7 @@ void restore_keys(){
 		if(is_key_available(cluster_file)){
 			restore_cluster();
 		}else{
-			printf("[*] no cluster keys available\n");
+			//printf("[*] no cluster keys available\n");
 		}
 
 

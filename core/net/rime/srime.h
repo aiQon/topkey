@@ -14,10 +14,10 @@
  * einfach verkettete liste. das letzte element hat einen "next" pointer auf NULL.
  */
 struct key_list_node {
+	struct key_list_node *next;
 	int address; //16 bit int-> first 8 bit = first octet, last 8 bit = last octet
 	char *key;
 	int key_len;
-	struct key_list_node *next;
 };
 
 typedef struct key_list_node node;
