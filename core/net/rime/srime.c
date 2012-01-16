@@ -12,9 +12,12 @@
 #include "cfs/cfs-coffee.h"
 
 
-char *individual_key = "\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0";
-char *own_cluster_key = "\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0";
-char *group_key = "\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0";
+//char *individual_key = "\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0";
+char individual_key[16];
+//char *own_cluster_key = "\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0";
+char own_cluster_key[16];
+//char *group_key = "\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0";
+char group_key[16];
 
 char *get_individual_key(){
 	return individual_key;
@@ -49,18 +52,21 @@ char *pairwise_file = "pair_file";
 int block_key_insertion=0;
 
 void set_individual_key(char *in){
-	if(!block_key_insertion)
-		individual_key = in;
+	if(!block_key_insertion){
+        memcpy(individual_key, in, 16);
+		//individual_key = in; //eventually free beforehand?
+        printf("[*] set individual key\n");
+    }
 }
 
 void set_own_cluster_key(char *in){
 	if(!block_key_insertion)
-		own_cluster_key = in;
+		memcpy(own_cluster_key, in, 16);
 }
 
 void set_group_key(char *in){
 	if(!block_key_insertion)
-		group_key = in;
+		memcpy(group_key, in, 16);
 }
 
 
@@ -376,12 +382,13 @@ void lock_key_insertion(){
 
 
 
-void init_srime(struct mesh_conn *mesh,
-				int channel,
-				const struct mesh_callbacks *callbacks){
+void init_srime(){
 
-	//memset(contacts, 0, sizeof(group_entry)*MAX_CONTACTS);
-	mesh_open(mesh, channel, callbacks);
+	memcpy(individual_key,"\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0", 16);
+	memcpy(group_key,"\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0", 16);
+	memcpy(own_cluster_key,"\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0", 16);
+    //memset(contacts, 0, sizeof(group_entry)*MAX_CONTACTS);
+	//mesh_open(mesh, channel, callbacks);
 	//init_fixed_values();
 
 }
