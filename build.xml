@@ -3,16 +3,13 @@
     <!--this file was created by Eclipse Runnable JAR Export Wizard-->
     <!--ANT 1.7 is required                                        -->
     <target name="create_run_jar">
-        <jar destfile="/home/stas/workspace/KeyGenerator/KeyGenerator.jar" filesetmanifest="mergewithoutmain">
+        <jar destfile="KeyGenerator.jar" filesetmanifest="mergewithoutmain">
             <manifest>
                 <attribute name="Main-Class" value="de.cased.KeyGenerator"/>
                 <attribute name="Class-Path" value="."/>
             </manifest>
-            <fileset dir="/home/stas/workspace/KeyGenerator"/>
-            <fileset dir="/home/stas/workspace/KeyGenerator/bin"/>
-            <fileset dir="/home/stas/workspace/jgraphx/bin"/>
-            <zipfileset excludes="META-INF/*.SF" src="/home/stas/workspace/jgraphx/lib/jgraphx.jar"/>
-            <zipfileset excludes="META-INF/*.SF" src="/home/stas/workspace/KeyGenerator/lib/RXTXcomm.jar"/>
+            <fileset dir="./bin"/>
+            <zipfileset excludes="META-INF/*.SF" src="lib/jgraphx.jar"/>
         </jar>
     </target>
 </project>
