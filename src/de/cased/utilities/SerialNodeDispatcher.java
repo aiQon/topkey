@@ -1,7 +1,5 @@
 package de.cased.utilities;
 
-import gnu.io.SerialPort;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.util.logging.Level;
