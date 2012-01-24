@@ -9,11 +9,7 @@
     </target>
 
     <target name="compile" depends="init">
-        <javac srcdir="${src}" destdir="${bin}">
-            <classpath>
-                <pathelement path="lib/jgraphx.jar" />
-            </classpath>
-        </javac>
+        <javac srcdir="${src}" destdir="${bin}" />
     </target> 
 
     <target name="create_run_jar" depends="compile">
@@ -21,9 +17,10 @@
             <manifest>
                 <attribute name="Main-Class" value="de.cased.KeyGenerator"/>
                 <attribute name="Class-Path" value="."/>
+                <attribute name="Class-Path" value="icons"/>
+                <attribute name="Class-Path" value="bin"/>
             </manifest>
             <fileset dir="${bin}"/>
-            <zipfileset excludes="META-INF/*.SF" src="lib/jgraphx.jar"/>
         </jar>
     </target>
 
