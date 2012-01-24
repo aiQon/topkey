@@ -12,12 +12,9 @@
 #include "cfs/cfs-coffee.h"
 
 
-//char *individual_key = "\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0";
-char individual_key[16];
-//char *own_cluster_key = "\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0";
-char own_cluster_key[16];
-//char *group_key = "\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0";
-char group_key[16];
+char individual_key[16];// = "\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0";
+char own_cluster_key[16];// = "\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0";
+char group_key[16];// = "\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0";
 
 char *get_individual_key(){
 	return individual_key;
@@ -52,11 +49,8 @@ char *pairwise_file = "pair_file";
 int block_key_insertion=0;
 
 void set_individual_key(char *in){
-	if(!block_key_insertion){
-        memcpy(individual_key, in, 16);
-		//individual_key = in; //eventually free beforehand?
-        printf("[*] set individual key\n");
-    }
+	if(!block_key_insertion)
+		memcpy(individual_key, in, 16);
 }
 
 void set_own_cluster_key(char *in){
@@ -72,10 +66,23 @@ void set_group_key(char *in){
 
 
 
+//node *cluster_list;
+//node *pairwise_list;
 
+LIST(cluster_list);
+LIST(pairwise_list);
 
-node *cluster_list = NULL;
-node *pairwise_list = NULL;
+list_t get_pairwise_list(){
+    return pairwise_list;
+}
+
+void init_srime(){
+
+}
+
+void srime_close(struct mesh_conn *c){
+	mesh_close(c);
+}
 
 node *create_new_node(int address, char *key, int key_len){
 	//printf("[*] entered create_new_node\n");
@@ -93,98 +100,44 @@ node *create_new_node(int address, char *key, int key_len){
 	return new_node;
 }
 
-node* insert_right(node *list, int address, char *key, int key_len){
-	node *new_node = create_new_node(address, key, key_len);
-	list->next     = new_node;
-	return new_node;
+node *search_address_in_list(list_t list, int address){
+    node *l = *list;
+    while(l != NULL){
+        if(l->address == address){
+            return l;
+        }
+        l = l->next;
+    }
+
+    return NULL;
 }
 
+
+node *insert_into_list(list_t list, int address, char *key, int key_len){
+    node *searchable = search_address_in_list(list, address);
+    if(searchable != NULL){
+        return NULL;
+        //list_remove(list, searchable);
+    }
+    node *new_node = create_new_node(address, key, key_len);
+    list_add(list, new_node);
+    return new_node;
+}
 
 
 node* insert_into_pairwise(int address, char *key, int key_len){
 	if(!block_key_insertion){
-		if(pairwise_list == NULL){
-			node *new_node = create_new_node(address,key, key_len);
-			pairwise_list = new_node;
-			return pairwise_list;
-		}else{
-			node *current = pairwise_list;
-			while(current->next != NULL)
-				current = current->next;
-			return insert_right(current,address,key, key_len);
-		}
+        return insert_into_list(pairwise_list, address, key, key_len);
 	}else
 		return NULL;
 }
 
 node* insert_into_cluster(int address, char *key, int key_len){
 	if(!block_key_insertion){
-		//printf("[*] adding cluster entry to list\n");
-		if(cluster_list == NULL){
-			//printf("[*] cluster list is empty, creating first node\n");
-			node *new_node = create_new_node(address,key, key_len);
-			//printf("[*] new node created w/o dying, hopefully\n");
-			cluster_list = new_node;
-			return cluster_list;
-		}else{
-			node *current = cluster_list;
-			while(current->next != NULL)
-				current = current->next;
-			//printf("[*] found end of cluster list...inserting at the end\n");
-			return insert_right(current,address,key, key_len);
-		}
+        return insert_into_list(cluster_list, address, key, key_len);
 	}else
 		return NULL;
 }
-
-void search_and_delete_entry_in_middle(node *list, node *element){
-	//find element before that one
-			node *searching = list;
-			while(searching->next != element){
-				if(searching->next == NULL)
-					return;		//ende erreicht und gesuchtes element nicht gefunden
-				else
-					searching = searching->next;
-			}
-			//now we stand one element behind the searched one
-			searching->next = element->next;
-			free(element);
-}
-
-void delete_from_cluster(node *element){
-	if(cluster_list == NULL)
-		return;			//wenn liste sowieso leer
-	if(element == cluster_list){						//first element
-		if(cluster_list->next == NULL){ //last element
-			free(cluster_list);
-			cluster_list = NULL;
-		}else{
-			node *tmp = cluster_list;
-			cluster_list = cluster_list->next;
-			free(tmp);
-		}
-	}else {
-		search_and_delete_entry_in_middle(cluster_list, element);
-	}
-}
-
-void delete_from_pairwise(node *element){
-	if(pairwise_list == NULL)
-		return;			//wenn liste sowieso leer
-	if(element == pairwise_list){						//first element
-		if(pairwise_list->next == NULL){ //last element
-			free(pairwise_list);
-			pairwise_list = NULL;
-		}else{
-			node *tmp = pairwise_list;
-			pairwise_list = pairwise_list->next;
-			free(tmp);
-		}
-	}else {
-		search_and_delete_entry_in_middle(pairwise_list, element);
-	}
-}
-
 
 
 
@@ -204,9 +157,11 @@ int rimeaddr2int(rimeaddr_t *address){
 		return NULL;
 }
 
-void print_list(node *list){
-	node *current = list;
+void print_list(list_t list){
+	node *current = *list;
 	while(current != NULL){
+        //if(current->key_len != 16) //TODO dirty workaround to test for initial semanticless list element
+        //    continue;
 		char *uip = decode_uip(current);
 		printf("{uip:%s,key:",uip);
 
@@ -224,11 +179,11 @@ void print_list(node *list){
 }
 
 char *get_pairwise_key(rimeaddr_t *neighbor){
-	node *searching = pairwise_list;
+	node *searching = *pairwise_list; //unsicher mit dem * bei rvalue
 
 	while(searching != NULL){
 		if(searching->address == rimeaddr2int(neighbor)){
-			printf("found pairwise key for address: %s.%s\n", neighbor->u8[0], neighbor->u8[1]);
+			printf("found pairwise key for address: %d.%d\n", neighbor->u8[0], neighbor->u8[1]);
 			return searching->key;
 		}
 		searching = searching->next;
@@ -245,6 +200,7 @@ void print_pairwise_list(){
 	print_list(pairwise_list);
 }
 
+/*
 int save_key(char *key, int key_size, char *file_name){
 	int fd_write;
 	int n=0;
@@ -263,8 +219,9 @@ int save_key(char *key, int key_size, char *file_name){
 	}
 	return n;
 }
+*/
 
-
+/*
 void save_address_key_pairs(char *file, node *list){
 	int fd_write = cfs_open(file, CFS_WRITE);
 	if(fd_write != -1){
@@ -277,8 +234,9 @@ void save_address_key_pairs(char *file, node *list){
 		cfs_close(fd_write);
 	}
 }
+*/
 
-
+/*
 void persist_keys(){
 	if(!block_key_insertion){
 		cfs_coffee_format();
@@ -291,7 +249,9 @@ void persist_keys(){
 	}
 
 }
+*/
 
+/*
 int is_key_available(char *key_file){
 	int handle = cfs_open(key_file,CFS_READ);
 	if(handle == -1)
@@ -300,13 +260,17 @@ int is_key_available(char *key_file){
 
 	return 1;
 }
+*/
 
+/*
 int check_key_existance(){
 	return  is_key_available(individual_key_file) &&
 			is_key_available(own_cluster_key_file) &&
 			is_key_available(group_key_file);
 }
+*/
 
+/*
 int restore_key(char *key, int key_size, char *file){
 	key = (char *)malloc(key_size);
 	int handle = cfs_open(file,CFS_READ);
@@ -318,7 +282,9 @@ int restore_key(char *key, int key_size, char *file){
 	}
 	return 0;
 }
+*/
 
+/*
 void restore_cluster(){
 	int fd_read = cfs_open(cluster_file, CFS_READ);
 	if(fd_read != -1){
@@ -335,19 +301,16 @@ void restore_cluster(){
 			//printf("[*] read cluster key for %s\n", uip);
 			free(uip);
 			//printf("[*] read key: ");
-			/*int j;
-			for(j=0;j<16;j++){
-				printf("%2X ", key[j]);
-			}
-			printf("\n");*/
 		}
 	}else{
 		printf("[*] no keys available to be restored\n");
 	}
 }
+*/
 
 void restore_keys(){
-	if(check_key_existance()){
+/*
+    if(check_key_existance()){
 		restore_key(individual_key, 16, individual_key_file);
 		restore_key(own_cluster_key, 16, own_cluster_key_file);
 		restore_key(group_key, 16, group_key_file);
@@ -369,6 +332,7 @@ void restore_keys(){
 		block_key_insertion=0;
 		printf("SRIME: no keys found.\n");
 	}
+    */
 }
 
 
@@ -382,20 +346,7 @@ void lock_key_insertion(){
 
 
 
-void init_srime(){
 
-	memcpy(individual_key,"\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0", 16);
-	memcpy(group_key,"\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0", 16);
-	memcpy(own_cluster_key,"\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0", 16);
-    //memset(contacts, 0, sizeof(group_entry)*MAX_CONTACTS);
-	//mesh_open(mesh, channel, callbacks);
-	//init_fixed_values();
-
-}
-
-void srime_close(struct mesh_conn *c){
-	mesh_close(c);
-}
 
 /*
 int find_rcv_index(char *rcv){

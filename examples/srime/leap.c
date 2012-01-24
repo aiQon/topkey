@@ -126,83 +126,37 @@ static struct unicast_conn uc;
 */
 
 static void
+process_nack(char *message, int len){
+    char *encoded = encode_hex(message,len);
+    printf("<NACK>%s</NACK>\n", encoded);
+    free(encoded);
+}
+
+
+static void
 send_ack_nack(){
-    
+    //printf("[*] reached send_ack_nack()\n"); 
     process_exit(&nack_process);
     static char message[5];  //1+2+2
     memcpy(message, "\x80", 1); //set the header to '10 000 000'
-    //static unsigned short swapped_seq;
-    //swapped_seq = ((sequence_mask >>8) & 0xFF) + ((sequence_mask << 8) & 0xFF00);
     memcpy(message+1, &sequence_mask, 2);
     static unsigned short crc;
     crc = crc16_data(message, 3, 0xffff);
-    //static unsigned short swapped_crc;
-    //swapped_crc = ((crc >> 8) & 0xFF) + ((crc << 8) & 0xFF00);
     memcpy(message+3, &crc, 2);
 
-    packetbuf_copyfrom(message,5);
-    unicast_send(&uc,&key_sender);
-    free(message);
-    
+    if(key_sender.u8[0] != rimeaddr_node_addr.u8[0] && key_sender.u8[1] != rimeaddr_node_addr.u8[1]){
+        packetbuf_copyfrom(message,5);
+        unicast_send(&uc,&key_sender);
+    }else{
+        process_nack(message, 5);
+    }
+
+    total_expected = 0;
+    sequence_mask = 0;
+    remaining_counter = 0;
+
 }
 
-
-
-
-/*
-static
-int extract_address(char *input){
-	char *address_key_separator = strchr(input,':');
-	int length_of_address = address_key_separator-input;
-	char *address_work = (char*) malloc(length_of_address+1);
-	memcpy(address_work,input,length_of_address);
-	char *address_sep = strchr(address_work,'.');
-	address_work[address_sep-address_work] = 0x00;
-	address_work[length_of_address] = 0x00;
-	int return_value = (atoi(address_work)<<8)+atoi(address_sep+1);
-	free(address_work);
-	return return_value;
-}
-*/
-
-/*
-static
-char *extract_key(char *input){
-	char *address_key_separator = strchr(input,':');
-	//printf("extracted key pointer=%s\n",address_key_separator+1);
-	return address_key_separator+1;
-}
-*/
-
-/*
-static void
-recv_ack(struct runicast_conn *c, const rimeaddr_t *from, uint8_t seqno)
-{
-	printf("runicast: got ACK from %d.%d, seqno %d\n",
-		     from->u8[0], from->u8[1],
-		     packetbuf_attr(PACKETBUF_ATTR_PACKET_ID));
-}
-*/
-/*
-static int
-extract_seq(char *message){
-    return (int)(((*message)>>3) & 0xFF);
-}
-
-static int
-extract_rem(char *message){
-    return (int)((*message) & 0xFF);
-}
-*/
-
-/*
-
-    gets the message in binary representation and
-    parses the header...
-    proceses sequence number, triggers timer,
-    schedules NACK transmissions etc...
-
-*/
 
 static void
 process_header(char *message){
@@ -211,13 +165,13 @@ process_header(char *message){
     static uint16_t rem;
     static uint16_t start_nack_proc = 0;
     
-    printf("[*] reached process_header()\n");
+    //printf("[*] reached process_header()\n");
     
-    seq = (int)(((*message)>>3) & 0x7);//extract_seq(message);
+    seq = (uint16_t)(((*message)>>3) & 0x7);//extract_seq(message);
     
-    rem = (int)((*message) & 0x7);//extract_rem(message);
+    rem = (uint16_t)((*message) & 0x7);//extract_rem(message);
 
-    printf("[*] extracted header infos= seq:%d,rem=%d\n", seq, rem);
+    //printf("[*] extracted header infos= seq:%d,rem=%d\n", seq, rem);
 
     if(total_expected == 0){  //first start
         start_nack_proc = 1;  //easy sync fix
@@ -227,9 +181,11 @@ process_header(char *message){
     remaining_counter = rem;
 
     sequence_mask |= 1 << seq;
+    
+    //printf("[*] sequence_mask after processing header:%d\n", sequence_mask);
 
     if(start_nack_proc && remaining_counter > 0){
- //       process_start(&nack_process, "");
+        process_start(&nack_process, "");
     }else if(remaining_counter == 0){
         send_ack_nack();
     }
@@ -258,7 +214,7 @@ process_header(char *message){
 static void
 parse_extended_message(char *message, int len){
     
-    printf("[*] reached parse_extended_message\n");
+    //printf("[*] reached parse_extended_message\n");
 
     int pure_payload_len = len - 3; //1 Byte header, 2 Bytes CRC
     int entity_count = pure_payload_len / 19;
@@ -271,17 +227,22 @@ parse_extended_message(char *message, int len){
         memcpy(&address, first_entity+1+19*i,    2);
         memcpy(key,      first_entity+1+19*i+2, 16);
         
-        if(prologue_byte == 'a'){
-            printf("[*] inserting pairwise key\n");
+        if(prologue_byte == 0x61){
+            //printf("[*] inserting pairwise key\n");
+            //printf("[*] key:\n");
+            //dump_memory(key, 16);
             insert_into_pairwise(address,key,16);
-        }else if(prologue_byte == 'b'){
-            printf("[*] inserting cluster key\n");
+        }else if(prologue_byte == 0x62){
+            //printf("[*] inserting cluster key\n");
+            //printf("[*] key:\n");
+            //dump_memory(key, 16);
             insert_into_cluster(address, key, 16);
         }
         else{
             //this should not happen
-            printf("[*] extended message has a prologue byte which was not expected: %c\n", prologue_byte);
+            //printf("[*] extended message has a prologue byte which was not expected: %c\n", prologue_byte);
         }
+        //free(key); dont free it, its needed in srime.c //bad style, sorry
     }
 }
 
@@ -301,12 +262,6 @@ parse_extended_message(char *message, int len){
 
 
 static void
-process_nack(char *message, int len){
-    
-    printf("<NACK>%s</NACK>\n", encode_hex(message,len));
-}
-
-static void
 parse_basic_message(char *message, int len){
   	set_individual_key(message+1);
     set_group_key(message+17);
@@ -324,30 +279,30 @@ parse_basic_message(char *message, int len){
 static void
 multiplex_message(char *message, int len){
 
-    printf("[*] reached multiplex_message()\n");
-    dump_memory(message, len);
+    //printf("[*] reached multiplex_message()\n");
+    //dump_memory(message, len);
     uint8_t type = (((uint8_t)*message)>>6) & 0xFF;
-    printf("[*] message type is:%d\n", type);
+    //printf("[*] message type is:%d\n", type);
     switch(type){ //check first 2 bits of the header
         case 0:
-            printf("received basic message\n");
+            //printf("received basic message\n");
             parse_basic_message(message, len);
             process_header(message);
             break;
 
         case 1:
-            printf("received extended message\n");
+            //printf("received extended message\n");
             parse_extended_message(message, len);
             process_header(message);
             break;
 
         case 2:
-            printf("received NACK\n");
+            //printf("received NACK\n");
             process_nack(message, len);
             break;
 
         case 3:
-            printf("received data1\n");
+            //printf("received data1\n");
             break;
     }
 
@@ -366,46 +321,35 @@ multiplex_message(char *message, int len){
 static int
 verify_crc(char *message, int len){
 
-    printf("[*] reached verify_crc(), message length is:%d\n", len);
+    //printf("[*] reached verify_crc(), message length is:%d\n", len);
 
     static unsigned short calculated;
     calculated = crc16_data(message, len-2, 0xffff);
-    printf("[*] calculated crc=%d\n", calculated);
-    dump_memory(&calculated, 2);
+    //printf("[*] calculated crc=%d\n", calculated);
+    //dump_memory(&calculated, 2);
 
-/*
-    static char *crc_expected_tmp;
-    crc_expected_tmp = message+len-2;
-    static unsigned short ext;
-    ext = ((*crc_expected_tmp)<<8) + (*(crc_expected_tmp+1));
-    printf("[*] expected crc=%d\n", ext);
-    dump_memory(&ext, 2);
-    printf("[*] CRC raw extract:\n");
-    dump_memory(crc_expected_tmp, 2);
-*/
-    
     static unsigned short extracted;
     memcpy(&extracted, message+len-2, 2);
-    printf("[*] extracted CRC in uint16t:%d\n", extracted);
-    printf("[*] extracted CRC in raw:\n");
-    dump_memory(message+len-2, 2);
+    //printf("[*] extracted CRC in uint16t:%d\n", extracted);
+    //printf("[*] extracted CRC in raw:\n");
+    //dump_memory(message+len-2, 2);
 
     return extracted==calculated ? 1 : 0;
 }
 
 static void
 process_message(char *message, int len){
-    printf("[*] reached process_message()\n");
+    //printf("[*] reached process_message()\n");
 
-    dump_memory(message, len);
+    //dump_memory(message, len);
 
     if(verify_crc(message, len) == 0){
-        printf("[*] packet rejected due to crc error\n");
+        //printf("[*] packet rejected due to crc error\n");
         return;
     }
   
-    printf("[*] message in binary:\n");
-    dump_memory(message, len);
+    //printf("[*] message in binary:\n");
+    //dump_memory(message, len);
 
     multiplex_message(message, len);
 }
@@ -413,17 +357,19 @@ process_message(char *message, int len){
 static void
 recv_uc(struct unicast_conn *c, const rimeaddr_t *from)
 {
-  printf("runicast message received from %d.%d\n",
-	 from->u8[0], from->u8[1]);
+  //printf("unicast message received from %d.%d\n",
+//	 from->u8[0], from->u8[1]);
     
-    key_sender.u8[0] = from->u8[0];
-    key_sender.u8[1] = from->u8[1];
+    if(key_sender.u8[0] == 0 && key_sender.u8[1] ==0){
+        key_sender.u8[0] = from->u8[0];
+        key_sender.u8[1] = from->u8[1];
+    }
 
     char *local_buffer = (char *) malloc(packetbuf_datalen());
     memcpy(local_buffer,packetbuf_dataptr(),packetbuf_datalen());
 
     process_message(local_buffer, packetbuf_datalen());
-    printf("[*] message processed, freeing local_buffer\n");    
+    //printf("[*] message processed, freeing local_buffer\n");    
     free(local_buffer);
 }
 
@@ -560,19 +506,25 @@ static uint16_t remaining_counter = 0;
 
 PROCESS_THREAD(nack_process, ev, data) {
 	static struct etimer et;
-    uint16_t remaining_save;
+    static uint16_t remaining_save;
     PROCESS_BEGIN();
     
+    //printf("[*] started NACK_PROCESS\n");
+/*
     do{
         if(remaining_counter == 0)
             break;
 
         remaining_save = remaining_counter;
         
+        printf("[*] NACK_PROCESS: going to sleep for 15ms\n");
         //maybe increase this value...needs testing
-        etimer_set(&et, CLOCK_SECOND/128*2); //TODO look this value upand hardcode, should be 15ms
+        //etimer_set(&et, CLOCK_SECOND/128*2);//*2! //TODO look this value upand hardcode, should be 15ms
+        etimer_set(&et, CLOCK_SECOND*3);//*2! //TODO look this value upand hardcode, should be 15ms
+
         PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&et));
         //etimer_reset(&et);
+        printf("[*] NACK_PROCESS: woke up\n");
 
         //if no update came in, send ACK/NACK (break out of the loop)
         if(remaining_save == remaining_counter){
@@ -580,7 +532,13 @@ PROCESS_THREAD(nack_process, ev, data) {
         }
 
     }while(remaining_save != remaining_counter);
+*/
     
+    etimer_set(&et, CLOCK_SECOND/128*remaining_counter*20);//*2! //TODO look this value upand hardcode, should be 15ms
+    //etimer_set(&et, CLOCK_SECOND*remaining_counter*20);//*2! //TODO look this value upand hardcode, should be 15ms
+    PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&et));
+
+    //printf("[*] NACK_PROCESS: sending NACK\n");
     send_ack_nack();
 
     PROCESS_END();
@@ -600,17 +558,6 @@ PROCESS_THREAD(shell_sky_printkeys_process, ev, data) {
 		printf("[*] pairwise keys:\n");
 		print_pairwise_list();
 		printf("\n");
-
-		printf("DEBUGGING :D ab hier baustelle\n");
-		printf("[*] trying to get key for 97.14\n");
-		rimeaddr_t node;
-		node.u8[0] = 97;
-		node.u8[1] = 14;
-		char *key = get_pairwise_key(&node);
-		if(key != NULL)
-			print_key("[*] key for 97.14:", key);
-		else
-			printf("key not found.\n");
 
 	PROCESS_END();
 }
@@ -717,8 +664,12 @@ PROCESS_THREAD(shell_sky_setup_process, ev, data)
 
   char *args = (char *) data;
 
-  printf("[*] setup %s\n", args);
+  //printf("[*] setup %s\n", args);
 
+  if(key_sender.u8[0] == 0 && key_sender.u8[1] ==0){
+    key_sender.u8[0] = rimeaddr_node_addr.u8[0]; //so we dont send to ourselves
+    key_sender.u8[1] = rimeaddr_node_addr.u8[1];
+  }
   rimeaddr_t addr;
 
   char *recv1 = strtok(args,". ");
@@ -729,13 +680,13 @@ PROCESS_THREAD(shell_sky_setup_process, ev, data)
   char *bin_msg = decode_hex(msg, strlen(msg));
   int bin_len = strlen(msg)/2;
 
-  dump_memory(bin_msg, bin_len);
+  //dump_memory(bin_msg, bin_len);
 
   if(!rimeaddr_cmp(&addr, &rimeaddr_node_addr)) {
     packetbuf_copyfrom(bin_msg, bin_len);
   	unicast_send(&uc, &addr);
   } else {
-    printf("not sending messages to myself, processing it\n");
+    //printf("not sending messages to myself, processing it\n");
     process_message(bin_msg, bin_len);
   }
   free(bin_msg);
@@ -757,6 +708,10 @@ PROCESS_THREAD(sky_shell_process, ev, data)
 
   cfs_coffee_format();
   printf("[*] formatting nvram during startup [DEBUG]\n");
+
+  //this needs so much to be refactored
+  key_sender.u8[0] = 0;
+  key_sender.u8[1] = 0;
 
   serial_shell_init();
   init_srime();
