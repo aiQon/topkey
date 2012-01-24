@@ -146,7 +146,7 @@ public class Editor extends JPanel {
 				availableNodes.add(line);
 			}
 		}catch(IOException e){
-			logger.log(Level.WARNING, e.toString());
+//			logger.log(Level.WARNING, e.toString());
 		}
 		
 	}

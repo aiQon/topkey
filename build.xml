@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <project default="create_run_jar" name="Create Runnable Jar for Project KeyGenerator">
-    
+    <!--this file was created by Eclipse Runnable JAR Export Wizard-->
+    <!--ANT 1.7 is required                       
+    -->
+
     <property name="src" location="src" />
     <property name="bin" location="bin" />
 
@@ -9,22 +12,23 @@
     </target>
 
     <target name="compile" depends="init">
-        <javac srcdir="${src}" destdir="${bin}" />
-    </target> 
+            <javac srcdir="${src}" destdir="${bin}">
+                <classpath>
+                    <path location="lib/jgraphx.jar" />
+                </classpath>
+            </javac>
+    </target>
+
 
     <target name="create_run_jar" depends="compile">
         <jar destfile="KeyGenerator.jar" filesetmanifest="mergewithoutmain">
             <manifest>
                 <attribute name="Main-Class" value="de.cased.KeyGenerator"/>
                 <attribute name="Class-Path" value="."/>
-                <attribute name="Class-Path" value="icons"/>
-                <attribute name="Class-Path" value="bin"/>
             </manifest>
             <fileset dir="${bin}"/>
+            <zipfileset excludes="META-INF/*.SF" src="lib/jgraphx.jar"/>
+            <fileset dir="icons"/>
         </jar>
-    </target>
-
-    <target name="clean">
-        <delete dir="${bin}" />
     </target>
 </project>
