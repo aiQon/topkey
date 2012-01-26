@@ -96,6 +96,8 @@ public class SerialCommunicator  {
 		    	writer.write(0x0a); //0A - end of line
 		    	writer.flush();
 		    	
+		    	Thread.sleep(100);
+		    	
 		    }
 		}
 		catch(Exception e){
