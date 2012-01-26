@@ -59,7 +59,7 @@ public class SerialWorker extends Thread {
 					
 					try {
 						logger.log(Level.INFO, "Current Thread falling asleep: " + Thread.currentThread().getName());
-						this.wait(5000); //can be lowered to 8, I think...
+						this.wait(100); //can be lowered to 8, I think...
 					} catch (Exception e) {
 						logger.log(Level.SEVERE, "SerialWorker failed falling asleep.");
 						System.out.println("Message:" + e.getMessage());
