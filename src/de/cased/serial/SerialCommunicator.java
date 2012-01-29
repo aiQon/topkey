@@ -85,18 +85,19 @@ public class SerialCommunicator  {
 		    	
 		    	System.out.println("sending:" + message[i]);
 //		    	
-//		    	byte[] bytes = message[i].getBytes();
-//		    	for (byte b : bytes) {
-//			    	writer.write(b);
-//			    }
-//		    	writer.write(0x0a); //0A - end of line
-//		    	writer.flush();
-		    	
-		    	writer.write(message[i]);
+		    	byte[] bytes = message[i].getBytes();
+		    	for (byte b : bytes) {
+			    	writer.write(b);
+			    	Thread.sleep(10);
+			    }
 		    	writer.write(0x0a); //0A - end of line
 		    	writer.flush();
 		    	
-		    	Thread.sleep(1000);
+//		    	writer.write(message[i]);
+//		    	writer.write(0x0a); //0A - end of line
+//		    	writer.flush();
+		    	
+		    	Thread.sleep(10);
 		    	
 		    }
 		}
