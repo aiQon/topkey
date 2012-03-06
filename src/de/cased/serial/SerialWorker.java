@@ -44,13 +44,19 @@ public class SerialWorker extends Thread {
 			int i = 0;
 			
 			while(i < wrappers.size()){
+				System.out.println("while loop");
 				progress.setProgressValue(i+1);
 				if(progress.is_aborting() == true)
 					return;
 				else{
+					System.out.println("generating message");
 					String commandQueue[] = null;
 					try {
 						commandQueue = wrappers.get(i).getMessages();
+						if(commandQueue == null | commandQueue.length == 0)
+							System.out.println("commandQueue empty");
+						else
+							System.out.println("commandQueue has elements:" + commandQueue.length);
 						sendCommand(commandQueue, keywords);
 					} catch (Exception e1) {
 						System.out.println("Failed creating sending message:" + e1.getMessage());
@@ -59,23 +65,28 @@ public class SerialWorker extends Thread {
 					
 					try {
 						logger.log(Level.INFO, "Current Thread falling asleep: " + Thread.currentThread().getName());
+						System.out.println("before wait");
 						this.wait(80); //can be lowered to 8, I think...
+						System.out.println("after wait");
 					} catch (Exception e) {
 						logger.log(Level.SEVERE, "SerialWorker failed falling asleep.");
 						System.out.println("Message:" + e.getMessage());
 						e.printStackTrace();
 					}
 					
+					if(analyseNACK(i))
+						i++;
 					
-					switch(checkResponsePacket()){
-					case NO_RESPONSE:
-						continue;
-					case NACK:
-						if(analyseNACK(i)){
-							i++;
-						}
-						break;
-				}
+//					switch(checkResponsePacket()){
+//					case NO_RESPONSE:
+//						continue;
+//					case NACK:
+//						if(analyseNACK(i)){
+//							i++;
+//						}
+//						break;
+//					}
+					
 				}
 			}
 			
@@ -156,27 +167,25 @@ public class SerialWorker extends Thread {
 		}
 	}
 
-	private ResponseTypes checkResponsePacket() {
-		synchronized (latestResponse) {
-			if(latestResponse.length() == 0)
-				return ResponseTypes.NO_RESPONSE;
-			
-			else
-				return ResponseTypes.NACK;
-			
-		}
-		
-	}
+//	private ResponseTypes checkResponsePacket() {
+//		synchronized (latestResponse) {
+//			if(latestResponse.length() == 0)
+//				return ResponseTypes.NO_RESPONSE;
+//			
+//			else
+//				return ResponseTypes.NACK;
+//			
+//		}
+//		
+//	}
 
-	public void receiveFailedTransmissions(String input){
-		synchronized (latestResponse) {
-			latestResponse = input;	
-		}
+	public synchronized void receiveFailedTransmissions(String input){
+		latestResponse = input;	
 		logger.log(Level.INFO, "SerialWorker received NACK transmission: " + input);
 	}
 	
 	private void sendCommand(String message[], String[] keywords) throws Exception{
-		
+		System.out.println("hit on serialworker, forwarding call");
 		interactor.sendMsgAndKeywords(message, keywords);
 //		String[] list = SerialCommunicator.retrieveHostSerialPortList();
 //		if(list.length == 1){

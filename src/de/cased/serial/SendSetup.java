@@ -77,7 +77,7 @@ public class SendSetup extends SerialInteractor implements ReceiveStringFromSeri
 		}
 		synchronized(sendingThread){
 			sendingThread.notify();
-			}
+		}
 	}
 
 }

@@ -79,16 +79,17 @@ public class SerialCommunicator  {
 //		    	}
 //		    }, 6000);
 			
+			System.out.println("hit on actual sender, sending bytewise");
 			dispatcher.setKeywords(keywords);
 			
 		    for(int i = 0; i < message.length; i++){
 		    	
-		    	System.out.println("sending:" + message[i]);
+		    	System.out.println("sending msg #:" + i + " with text:" +message[i]);
 //		    	
 		    	byte[] bytes = message[i].getBytes();
 		    	for (byte b : bytes) {
 			    	writer.write(b);
-			    	Thread.sleep(10);
+			    	Thread.sleep(20);
 			    }
 		    	writer.write(0x0a); //0A - end of line
 		    	writer.flush();
@@ -97,9 +98,11 @@ public class SerialCommunicator  {
 //		    	writer.write(0x0a); //0A - end of line
 //		    	writer.flush();
 		    	
-		    	Thread.sleep(10);
+		    	Thread.sleep(30);
 		    	
 		    }
+		    System.out.println("message sent, checking if there is more");
+		    
 		}
 		catch(Exception e){
 			logger.log(Level.SEVERE, "Serial Port is busy, abort connection");
