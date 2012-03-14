@@ -37,6 +37,8 @@
 #include "lib/crc16.h"
 
 #include "dev/button-sensor.h"
+#include "leap.h"
+
 
 #define DEBUG_SNIFFERS 0
 #define MAX_RETRANSMISSIONS 4
@@ -534,7 +536,7 @@ PROCESS_THREAD(nack_process, ev, data) {
     }while(remaining_save != remaining_counter);
 */
     
-    etimer_set(&et, CLOCK_SECOND/128*remaining_counter*20);//*2! //TODO look this value upand hardcode, should be 15ms
+    etimer_set(&et, CLOCK_SECOND/128*remaining_counter*NACK_WAIT);//*2! //TODO look this value upand hardcode, should be 15ms
     //etimer_set(&et, CLOCK_SECOND*remaining_counter*20);//*2! //TODO look this value upand hardcode, should be 15ms
     PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&et));
 
