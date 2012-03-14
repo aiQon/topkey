@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import de.cased.utilities.Bitter;
+import de.cased.utilities.Config;
 import de.cased.utilities.JProgressBarDialog;
 import de.cased.utilities.KeyHelper;
 import de.cased.utilities.MessageWrapper;
@@ -17,6 +17,7 @@ public class SerialWorker extends Thread {
 	String latestResponse = "";
 	boolean responseChecked = false;
 	private JProgressBarDialog progress;
+	private Config config = Config.getInstance();
 	
 	private Logger logger = Logger.getLogger("KeyGenerator");
 	
@@ -66,7 +67,7 @@ public class SerialWorker extends Thread {
 					try {
 						logger.log(Level.INFO, "Current Thread falling asleep: " + Thread.currentThread().getName());
 						System.out.println("before wait");
-						this.wait(80); //can be lowered to 8, I think...
+						this.wait(Integer.parseInt(config.getProperty("serial.RTT"))); //can be lowered to 8, I think...
 						System.out.println("after wait");
 					} catch (Exception e) {
 						logger.log(Level.SEVERE, "SerialWorker failed falling asleep.");

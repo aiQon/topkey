@@ -7,13 +7,12 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Timer;
-import java.util.TimerTask;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import de.cased.utilities.Config;
 import de.cased.utilities.SerialNodeDispatcher;
 
 public class SerialCommunicator  {
@@ -23,6 +22,7 @@ public class SerialCommunicator  {
 	Process serialLink;
 	BufferedReader reader;
 	BufferedWriter writer;
+	private Config config = Config.getInstance();
 	
 	
 	
@@ -89,7 +89,7 @@ public class SerialCommunicator  {
 		    	byte[] bytes = message[i].getBytes();
 		    	for (byte b : bytes) {
 			    	writer.write(b);
-			    	Thread.sleep(20);
+			    	Thread.sleep(Integer.parseInt(config.getProperty("serial.byte_delay")));
 			    }
 		    	writer.write(0x0a); //0A - end of line
 		    	writer.flush();
@@ -98,7 +98,7 @@ public class SerialCommunicator  {
 //		    	writer.write(0x0a); //0A - end of line
 //		    	writer.flush();
 		    	
-		    	Thread.sleep(30);
+		    	Thread.sleep(Integer.parseInt(config.getProperty("serial.line_delay")));
 		    	
 		    }
 		    System.out.println("message sent, checking if there is more");

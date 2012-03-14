@@ -1,7 +1,6 @@
 package de.cased;
 
 import java.awt.BorderLayout;
-import java.awt.Color;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
@@ -30,6 +29,7 @@ import com.mxgraph.util.mxConstants;
 import com.mxgraph.view.mxGraph;
 import com.mxgraph.view.mxPerimeter;
 
+import de.cased.utilities.Config;
 import de.cased.utilities.Editor;
 import de.cased.utilities.SettingsGenerator;
 
@@ -76,7 +76,7 @@ public class KeyGenerator extends JFrame {
 	}
 
 	private void loadRXTX() {
-		System.loadLibrary("rxtxSerial");
+		//System.loadLibrary("rxtxSerial");
 	}
 
 	private void setWindowAdapter(){
@@ -282,13 +282,23 @@ public class KeyGenerator extends JFrame {
 
 	public static void main(String[] args) {
 		
-		mxConstants.SHADOW_COLOR = Color.LIGHT_GRAY;
-		
+		//mxConstants.SHADOW_COLOR = Color.LIGHT_GRAY;
+		buildConfiguration();
 		KeyGenerator frame = new KeyGenerator();
 		frame.setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
 		frame.setSize(800, 600);
 		frame.setVisible(true);
 
+	}
+
+	private static void buildConfiguration() {
+		Config config = Config.getInstance();
+		System.out.println("Test of Config file:");
+		System.out.println("RTT: " + config.getProperty("serial.RTT"));
+		System.out.println("serial.byte_delay: " + config.getProperty("serial.byte_delay"));
+		System.out.println("serial.line_delay: " + config.getProperty("serial.line_delay"));
+		
+		
 	}
 
 }
