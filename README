@@ -1,0 +1,34 @@
+Introduction
+============
+
+TOPKEY is a framework for setting up key material in a wireless sensor network prior to deployment. It consists of a coordinator part which is run on a laptop/desktop and a contiki image which is to be flashed on to the wireless sensor nodes which are meant to be used for the purpose.
+
+In this directory you find the coordinator part written in Java and the contiki image part written in C.
+
+Contiki Image
+=============
+
+For the contiki image to use you have to have the appropriate toolchain installed on your development machine. In case of the development for this project the Telos B sensor nodes were used which need the msp430 toolchain. 
+Having the appropriate toolchain installed navigate to 'contiki-image/topkey' and issue 'TARGET=<platform> make leap.upload' where <platform> is the target platform of your nodes in use. As already said in our case this has been msp430 which is compatible with the sky platform of the contiki source tree. Hence our command was 'TARGET=sky make leap.upload'. The Makefile magic builds the basic contiki image and adds the appropriate logic to it which is needed to use our framework. Afterwards this very image is uploaded to all connected nodes of your computer (USB connection). The easiest deployment of the image works with a USB hub and having all nodes connected to it. Then you only need to run the command above once to have all the nodes flashed.
+
+Once all the nodes are flashed. They are ready to receive their key material.
+
+Coordinator
+===========
+
+The coordinator is meant to generate the key material for the nodes and deploy this material over the air. Several issues have to be considered in this case. As of now the coordinator generates AES128 keys in the LEAP scheme to be deployed. If other key material is needed the coordinator and the contiki image need to be adapted accordingly. Further on the coordinator has to run on a linux mashine and has to have one of the nodes to be attached to it due to the current kind of communication limitation of common computers. It is not common to have a ZigBee communication module build into current computers thats why we use one of the nodes as a gateway and use a native linux communication tool for their interaction. The platform independant RX/TX driver has proven not to be very reliable for this purpose.
+
+Having the correct environment just navigate to the 'coordinator' sub-directory and issue 'ant'. The executeable will be called 'KeyGenerator.jar' and can be issued with 'java jar Keygenerator.jar'.
+
+Note that we use JGraphX as a library for the GUI. If you want to adapt anything according to the UI fetch the latest source code, adapt, build the library and place it into the 'coordinator/lib' directory.
+
+Having the GUI running just generate the nodes representatives by double clicking on the empty space in the main editor space or hitting on the plus button in the menu bar. Interconnect the nodes, let the tool check the connectivity to the sink and generate the keys. Note that the sink representation in the editor is not meant to have a micro IP instead just place a node before the sink which is meant to be the gateway for the WSN and give this very node the appropriate micro IP. After everything is generated hit on deploy and wait for the key material to be deployed.
+
+If everything went fine you can check the correct deployment on the nodes by connecting them via USB and issueg the debugging command 'printkeys'.
+
+
+Links
+=====
+	* msp430: http://sourceforge.net/apps/mediawiki/mspgcc/index.php?title=MSPGCC_Wiki
+	* LEAP: http://dl.acm.org/citation.cfm?id=948120
+	* RX/TX: http://rxtx.qbang.org/wiki/index.php/Main_Page
